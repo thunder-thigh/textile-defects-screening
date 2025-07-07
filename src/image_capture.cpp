@@ -1,3 +1,11 @@
+//RUN AS: "./fabric_capture ROLL20250707 1333 800 0"
+//Parameter	Meaning
+//ROLL20250707	Roll ID
+//1333	Fabric speed in mm/s (80 m/min)
+//800	Visible length of fabric in mm (central 80% of the frame)
+//0	Camera ID
+
+
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <iomanip>
@@ -19,27 +27,32 @@ std::string current_datetime_string() {
 
 int main(int argc, char** argv) {
     if (argc != 5) {
-        std::cerr << "Usage: ./fabric_capture <ROLL_ID> <FABRIC_SPEED_MMPS> <INTERVAL_SECONDS> <CAMERA_ID>\n";
-        std::cerr << "Example: ./fabric_capture ROLL567 1333 0.5 0\n";
+        std::cerr << "Usage:\n";
+        std::cerr << "  ./fabric_capture <ROLL_ID> <FABRIC_SPEED_MMPS> <VISIBLE_LENGTH_MM> <CAMERA_ID>\n";
+        std::cerr << "Example:\n";
+        std::cerr << "  ./fabric_capture ROLL567 1333 800 0\n";
         return 1;
     }
 
     std::string roll_id = argv[1];
-    double speed_mmps = std::stod(argv[2]);        // mm/s (e.g., 1333)
-    double interval_sec = std::stod(argv[3]);      // time between captures (e.g., 0.5)
-    int camera_id = std::stoi(argv[4]);            // usually 0 for default camera
+    double speed_mmps = std::stod(argv[2]);           // e.g. 1333 mm/s
+    double visible_length_mm = std::stod(argv[3]);    // e.g. 800 mm visible in frame
+    int camera_id = std::stoi(argv[4]);
+
+    // Derived: effective spacing between frames = 80% of visible fabric
+    double capture_spacing_mm = visible_length_mm * 0.8;
+    double capture_interval_sec = capture_spacing_mm / speed_mmps;
 
     fs::path save_dir = "/assets/still_images";
     fs::create_directories(save_dir);
 
-    // Open camera
     cv::VideoCapture cap(camera_id);
     if (!cap.isOpened()) {
         std::cerr << "❌ Failed to open camera ID " << camera_id << "\n";
         return 1;
     }
 
-    std::cout << "🎬 Capturing images every " << interval_sec << "s at " << speed_mmps << " mm/s\n";
+    std::cout << "🎬 Capturing every " << capture_interval_sec << " sec\n";
 
     double location_mm = 0.0;
     int frame_counter = 0;
@@ -51,11 +64,11 @@ int main(int argc, char** argv) {
         cap >> frame;
 
         if (frame.empty()) {
-            std::cerr << "⚠️ Frame capture failed. Skipping...\n";
+            std::cerr << "⚠️  Frame capture failed. Skipping...\n";
             continue;
         }
 
-        // Convert location from mm → meters
+        // Convert mm → meters
         double location_m = location_mm / 1000.0;
         std::ostringstream filename;
         filename << roll_id << "_"
@@ -66,16 +79,13 @@ int main(int argc, char** argv) {
         cv::imwrite(fullpath.string(), frame);
         std::cout << "✅ Saved: " << fullpath << "\n";
 
-        // Update position: distance = speed × time
-        location_mm += speed_mmps * interval_sec;
-
+        location_mm += capture_spacing_mm;
         frame_counter++;
 
-        // Sleep for remainder of interval
+        // Sleep until next frame
         auto end = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration<double>(end - start).count();
-        double sleep_time = interval_sec - elapsed;
-
+        double elapsed = std::chrono::duration<double>(end - start).count();
+        double sleep_time = capture_interval_sec - elapsed;
         if (sleep_time > 0)
             std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time));
     }
