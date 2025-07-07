@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     double capture_spacing_mm = visible_length_mm * 0.8;
     double capture_interval_sec = capture_spacing_mm / speed_mmps;
 
-    fs::path save_dir = "/assets/still_images";
+    fs::path save_dir = "assets/still_images";
     fs::create_directories(save_dir);
 
     cv::VideoCapture cap(camera_id);

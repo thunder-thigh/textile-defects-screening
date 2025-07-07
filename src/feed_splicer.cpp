@@ -1,86 +1,96 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <filesystem>
-#include <string>
-#include <chrono>
-#include <thread>
 #include <iomanip>
+#include <filesystem>
+#include <chrono>
+#include <ctime>
+#include <thread>
 
 namespace fs = std::filesystem;
 
-void printUsage() {
-    std::cout << "Usage:\n"
-              << "  ./frame_splicer <video_source> <output_dir> <width> <height> <fabric_speed_mmps> <visible_length_mm> <fabric_roll_id>\n\n"
-              << "Example:\n"
-              << "  ./frame_splicer rtsp://cam_ip frames/ 1280 720 1200 800 ROLL123\n";
+// === Time formatter ===
+std::string current_datetime_string() {
+    std::time_t now = std::time(nullptr);
+    std::tm* t = std::localtime(&now);
+    std::ostringstream oss;
+    oss << std::put_time(t, "%Y%m%d_%H%M%S");
+    return oss.str();
 }
 
 int main(int argc, char** argv) {
-    if (argc != 8) {
-        printUsage();
+    if (argc != 5) {
+        std::cerr << "Usage:\n";
+        std::cerr << "  ./feed_splicer <ROLL_ID> <FABRIC_SPEED_MMPS> <VISIBLE_LENGTH_MM> <VIDEO_SOURCE>\n";
+        std::cerr << "Example:\n";
+        std::cerr << "  ./feed_splicer ROLL789 1333 800 rtsp://camera.local/stream\n";
         return 1;
     }
 
-    std::string videoSource = argv[1];
-    std::string outputDir = argv[2];
-    int width = std::stoi(argv[3]);
-    int height = std::stoi(argv[4]);
-    double fabricSpeed = std::stod(argv[5]);       // mm/s
-    double visibleLength = std::stod(argv[6]);     // mm
-    std::string rollID = argv[7];
+    std::string roll_id = argv[1];
+    double speed_mmps = std::stod(argv[2]);
+    double visible_length_mm = std::stod(argv[3]);
+    std::string video_source = argv[4];
 
-    // Effective length per capture (80% of frame visible)
-    double advanceLength = visibleLength * 0.8;
-    double captureIntervalSec = advanceLength / fabricSpeed;
+    // Derived values
+    double spacing_mm = visible_length_mm * 0.8;
+    double capture_interval_sec = spacing_mm / speed_mmps;
 
-    std::cout << "📐 Fabric speed: " << fabricSpeed << " mm/s\n";
-    std::cout << "📷 Visible length: " << visibleLength << " mm\n";
-    std::cout << "⏱️ Capture interval: " << captureIntervalSec << " sec (~" << (1.0 / captureIntervalSec) << " FPS)\n";
+    fs::path output_dir = fs::current_path() / "assets" / "spliced_frames";
+    fs::create_directories(output_dir);
 
-    fs::path rollDir = fs::path(outputDir) / rollID;
-    fs::create_directories(rollDir);
+    cv::VideoCapture cap;
+    if (video_source.find("http") == 0 || video_source.find("rtsp") == 0 || video_source.find("m3u8") != std::string::npos) {
+        cap.open(video_source); // network stream
+    } else {
+        cap.open(video_source); // local file path
+    }
 
-    // Open stream
-    cv::VideoCapture cap(videoSource);
     if (!cap.isOpened()) {
-        std::cerr << "❌ Could not open video source: " << videoSource << "\n";
+        std::cerr << "❌ Failed to open video source: " << video_source << "\n";
         return 1;
     }
 
-    // Set resolution
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, width);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, height);
+    std::cout << "🎞️  Starting feed splice capture...\n";
 
-    int frameCount = 0;
-    cv::Mat frame;
-
-    auto lastCaptureTime = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+    double location_mm = 0.0;
+    int frame_counter = 0;
 
     while (true) {
+        auto start_time = std::chrono::steady_clock::now();
+
+        cv::Mat frame;
         bool success = cap.read(frame);
         if (!success || frame.empty()) {
-            std::cerr << "⚠️  Frame read failed. Exiting.\n";
+            std::cerr << "⚠️  Stream ended or frame empty. Stopping...\n";
             break;
         }
 
-        auto now = std::chrono::steady_clock::now();
-        double elapsedSec = std::chrono::duration<double>(now - lastCaptureTime).count();
+        double location_m = location_mm / 1000.0;
 
-        if (elapsedSec >= captureIntervalSec) {
-            // Save frame
-            std::ostringstream filename;
-            filename << rollDir.string() << "/frame_" << std::setw(5) << std::setfill('0') << frameCount << ".png";
-            cv::imwrite(filename.str(), frame);
-            std::cout << "✅ Captured frame_" << frameCount << " at " << elapsedSec << "s\n";
+        std::ostringstream filename;
+        filename << roll_id << "_"
+                 << std::fixed << std::setprecision(2) << location_m << "_"
+                 << current_datetime_string() << ".png";
 
-            frameCount++;
-            lastCaptureTime = now;
+        fs::path fullpath = output_dir / filename.str();
+        cv::imwrite(fullpath.string(), frame);
+        std::cout << "✅ Saved: " << fullpath << "\n";
+
+        frame_counter++;
+        location_mm += spacing_mm;
+
+        // Sleep to match spacing logic
+        auto end_time = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration<double>(end_time - start_time).count();
+        double sleep_duration = capture_interval_sec - elapsed;
+
+        if (sleep_duration > 0) {
+            std::this_thread::sleep_for(std::chrono::duration<double>(sleep_duration));
         }
-
-        // Slight sleep to avoid hammering CPU (stream is real-time anyway)
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    std::cout << "✅ Capture complete. Total frames: " << frameCount << "\n";
+    cap.release();
+    std::cout << "🛑 Capture finished. Total frames saved: " << frame_counter << "\n";
+
     return 0;
 }
