@@ -28,9 +28,10 @@ std::string current_datetime_string() {
 int main(int argc, char** argv) {
     if (argc != 5) {
         std::cerr << "Usage:\n";
-        std::cerr << "  ./fabric_capture <ROLL_ID> <FABRIC_SPEED_MMPS> <VISIBLE_LENGTH_MM> <CAMERA_ID>\n";
+        std::cerr << "  ./image_capture <ROLL_ID> <FABRIC_SPEED_MMPS> <VISIBLE_LENGTH_MM> <CAMERA_ID>\n";
         std::cerr << "Example:\n";
-        std::cerr << "  ./fabric_capture ROLL567 1333 800 0\n";
+        std::cerr << "  ./image_capture ROLL567 1333 800 0\n";
+
         return 1;
     }
 
