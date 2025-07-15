@@ -38,6 +38,6 @@ foreach(TARGET_NAME IN ITEMS
 )
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET_NAME}> ${INSTALL_BIN_DIR}
-        COMMENT "📦 Copying ${TARGET_NAME} to packaging directory"
+        COMMENT "Copying ${TARGET_NAME} to packaging directory"
     )
 endforeach()
