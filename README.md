@@ -1,12 +1,10 @@
-# Textile Defect Detection System
+## Textile Defect Detection System
 
 This is a modular C++ project built for inspecting fabric defects—like creasing—on a stenter machine. It works by capturing high-resolution images or slicing frames from a video feed, then running edge detection to identify visible issues. The goal is reliable, real-time inspection suitable for industrial environments.
 
 It uses OpenCV for image processing and GTK for a lightweight GUI. Everything is designed to be scriptable, portable, and easily integrated with existing ERP or IoT infrastructure.
 
----
-
-## Overview
+# Overview
 
 There are four main components in this system:
 
@@ -17,15 +15,13 @@ There are four main components in this system:
 
 Each component is a standalone executable and can run independently or be controlled via the GUI.
 
----
-
 <p align="center">
   <img src="github_assets/GUI_greybird.png" alt="White mode gui" width="45%" />
   <img src="github_assets/GUI_greybird_dark.png" alt="dark mode gui" width="45%" />
 </p>
 
-## Folder Structure
-
+# Folder Structure
+```
 /usr/bin/
 ├── image_capture
 ├── feed_splicer
@@ -36,17 +32,13 @@ Each component is a standalone executable and can run independently or be contro
 ├── still_images/ # Output from image_capture
 ├── spliced_frames/ # Output from feed_splicer
 └── processed_images/ # Output from creasing_detector
-
-
----
+```
 
 ## Example Usage
-
 # Manual capture using camera
 ```bash
 image_capture ROLL20250707 1333 800 0
 ```
-
 # Frame slicing from a video stream
 ```bash
 feed_splicer ROLL20250707 1333 800 rtsp://your-stream-url
@@ -62,12 +54,12 @@ fabric_gui_launcher
 This will bring up a GTK window with input fields and buttons to control everything.
 
 # Build Instructions
+
 Make sure OpenCV and GTK3 are installed on your system:
 ```bash
 sudo apt install build-essential cmake libopencv-dev libgtk-3-dev
 ```
 Then build:
-
 ```bash
 git clone https://github.com/thunder-thigh/textile-defects-screening
 cd textile-defects-screening
