@@ -14,7 +14,7 @@ std::string get_entry_text(GtkWidget *entry) {
 }
 
 void start_image_capture(GtkWidget *, gpointer) {
-    std::string cmd = "./image_capture " + get_entry_text(entry_roll_id) + " " +
+    std::string cmd = "image_capture " + get_entry_text(entry_roll_id) + " " +
                       get_entry_text(entry_fabric_speed) + " " +
                       get_entry_text(entry_visible_length) + " " +
                       get_entry_text(entry_camera_id);
@@ -28,7 +28,7 @@ void stop_image_capture(GtkWidget *, gpointer) {
 }
 
 void start_feed_splicer(GtkWidget *, gpointer) {
-    std::string cmd = "./feed_splicer " + get_entry_text(entry_roll_id) + " " +
+    std::string cmd = "feed_splicer " + get_entry_text(entry_roll_id) + " " +
                       get_entry_text(entry_video_url) + " " +
                       get_entry_text(entry_fabric_speed) + " " +
                       get_entry_text(entry_visible_length);
@@ -43,7 +43,7 @@ void stop_feed_splicer(GtkWidget *, gpointer) {
 
 void start_creasing_detector(GtkWidget *, gpointer) {
     if (detector_proc) g_subprocess_force_exit(detector_proc);
-    detector_proc = g_subprocess_new(G_SUBPROCESS_FLAGS_NONE, NULL, "./creasing_detector", NULL);
+    detector_proc = g_subprocess_new(G_SUBPROCESS_FLAGS_NONE, NULL, "creasing_detector", NULL);
 }
 
 void stop_creasing_detector(GtkWidget *, gpointer) {
