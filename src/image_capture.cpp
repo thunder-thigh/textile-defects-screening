@@ -15,6 +15,8 @@
 
 namespace fs = std::filesystem;
 
+const std::string SAVE_DIR = "/usr/share/textile-defects/assets/still_images";
+
 // === Time Utility ===
 std::string current_datetime_string() {
     std::time_t now = std::time(nullptr);
@@ -30,7 +32,7 @@ void capture_image(cv::VideoCapture& cap, const std::string& roll_id, const fs::
     cap >> frame;
 
     if (frame.empty()) {
-        std::cerr << "⚠️  Frame capture failed. Skipping...\n";
+        std::cerr << "Frame capture failed. Skipping...\n";
         return;
     }
 
@@ -43,7 +45,7 @@ void capture_image(cv::VideoCapture& cap, const std::string& roll_id, const fs::
 
     fs::path fullpath = save_dir / filename.str();
     cv::imwrite(fullpath.string(), frame);
-    std::cout << "✅ Saved: " << fullpath << "\n";
+    std::cout << "Saved: " << fullpath << "\n";
 }
 
 int main(int argc, char** argv) {
@@ -60,24 +62,21 @@ int main(int argc, char** argv) {
     double visible_length_mm = std::stod(argv[3]);    // e.g. 800 mm visible in frame
     int camera_id = std::stoi(argv[4]);
 
-    // Derived interval between captures (80% overlap)
     double capture_spacing_mm = visible_length_mm * 0.8;
     double capture_interval_sec = capture_spacing_mm / speed_mmps;
 
-    // Reverted path (as requested)
-    fs::path save_dir = "assets/still_images";
+    fs::path save_dir = SAVE_DIR;
     fs::create_directories(save_dir);
 
     cv::VideoCapture cap(camera_id);
     if (!cap.isOpened()) {
-        std::cerr << "❌ Failed to open camera ID " << camera_id << "\n";
+        std::cerr << "Failed to open camera ID " << camera_id << "\n";
         return 1;
     }
 
-    std::cout << "🎬 Starting capture every " << capture_interval_sec << " seconds...\n";
+    std::cout << "Starting capture every " << capture_interval_sec << " seconds...\n";
 
     double location_mm = 0.0;
-    int frame_counter = 0;
 
     while (true) {
         auto start = std::chrono::steady_clock::now();
@@ -85,7 +84,6 @@ int main(int argc, char** argv) {
         capture_image(cap, roll_id, save_dir, location_mm);
 
         location_mm += capture_spacing_mm;
-        frame_counter++;
 
         auto end = std::chrono::steady_clock::now();
         double elapsed = std::chrono::duration<double>(end - start).count();

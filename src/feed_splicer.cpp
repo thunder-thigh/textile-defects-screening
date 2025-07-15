@@ -31,26 +31,21 @@ int main(int argc, char** argv) {
     double visible_length_mm = std::stod(argv[3]);
     std::string video_source = argv[4];
 
-    // Derived values
     double spacing_mm = visible_length_mm * 0.8;
     double capture_interval_sec = spacing_mm / speed_mmps;
 
-    fs::path output_dir = fs::current_path() / "assets" / "spliced_frames";
+    fs::path output_dir = "/usr/share/textile-defects/assets/spliced_frames";
     fs::create_directories(output_dir);
 
     cv::VideoCapture cap;
-    if (video_source.find("http") == 0 || video_source.find("rtsp") == 0 || video_source.find("m3u8") != std::string::npos) {
-        cap.open(video_source); // network stream
-    } else {
-        cap.open(video_source); // local file path
-    }
+    cap.open(video_source); // works for both local files and streams
 
     if (!cap.isOpened()) {
-        std::cerr << "❌ Failed to open video source: " << video_source << "\n";
+        std::cerr << "Failed to open video source: " << video_source << "\n";
         return 1;
     }
 
-    std::cout << "🎞️  Starting feed splice capture...\n";
+    std::cout << "Feed splice capture started...\n";
 
     double location_mm = 0.0;
     int frame_counter = 0;
@@ -61,7 +56,7 @@ int main(int argc, char** argv) {
         cv::Mat frame;
         bool success = cap.read(frame);
         if (!success || frame.empty()) {
-            std::cerr << "⚠️  Stream ended or frame empty. Stopping...\n";
+            std::cerr << "Stream ended or frame empty. Stopping...\n";
             break;
         }
 
@@ -74,12 +69,11 @@ int main(int argc, char** argv) {
 
         fs::path fullpath = output_dir / filename.str();
         cv::imwrite(fullpath.string(), frame);
-        std::cout << "✅ Saved: " << fullpath << "\n";
+        std::cout << "Saved: " << fullpath << "\n";
 
         frame_counter++;
         location_mm += spacing_mm;
 
-        // Sleep to match spacing logic
         auto end_time = std::chrono::steady_clock::now();
         double elapsed = std::chrono::duration<double>(end_time - start_time).count();
         double sleep_duration = capture_interval_sec - elapsed;
@@ -90,7 +84,7 @@ int main(int argc, char** argv) {
     }
 
     cap.release();
-    std::cout << "🛑 Capture finished. Total frames saved: " << frame_counter << "\n";
+    std::cout << "Capture finished. Total frames saved: " << frame_counter << "\n";
 
     return 0;
 }

@@ -7,8 +7,8 @@
 
 namespace fs = std::filesystem;
 
-const std::string INPUT_DIR = "assets/spliced_frames";
-const std::string OUTPUT_DIR = "assets/processed_images";
+const std::string INPUT_DIR = "/usr/share/textile-defects/assets/spliced_frames";
+const std::string OUTPUT_DIR = "/usr/share/textile-defects/assets/processed_images";
 
 // Supported image extensions
 const std::unordered_set<std::string> IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".bmp"};
