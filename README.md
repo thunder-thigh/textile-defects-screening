@@ -4,7 +4,7 @@ This is a modular C++ project built for inspecting fabric defects—like creasin
 
 It uses OpenCV for image processing and GTK for a lightweight GUI. Everything is designed to be scriptable, portable, and easily integrated with existing ERP or IoT infrastructure.
 
-# Overview
+### Overview
 
 There are four main components in this system:
 
@@ -20,7 +20,7 @@ Each component is a standalone executable and can run independently or be contro
   <img src="github_assets/GUI_greybird_dark.png" alt="dark mode gui" width="45%" />
 </p>
 
-# Folder Structure
+### Folder Structure
 ```
 /usr/bin/
 ├── image_capture
@@ -35,15 +35,15 @@ Each component is a standalone executable and can run independently or be contro
 ```
 
 ## Example Usage
-# Manual capture using camera
+### Manual capture using camera
 ```bash
 image_capture ROLL20250707 1333 800 0
 ```
-# Frame slicing from a video stream
+### Frame slicing from a video stream
 ```bash
 feed_splicer ROLL20250707 1333 800 rtsp://your-stream-url
 ```
-# Start the detector
+### Start the detector
 ```bash
 creasing_detector
 ```
@@ -53,7 +53,7 @@ fabric_gui_launcher
 ```
 This will bring up a GTK window with input fields and buttons to control everything.
 
-# Build Instructions
+### Build Instructions
 
 Make sure OpenCV and GTK3 are installed on your system:
 ```bash
@@ -69,20 +69,20 @@ cmake --build .
 ```
 The build process will copy all compiled binaries into build/textile-defects-screening/usr/bin/ to match Debian packaging structure.
 
-# Packaging
+### Packaging
 
 The application is structured with system-wide install locations in mind:
 Binaries are placed in /usr/bin/
 All output folders (still_images, spliced_frames, processed_images) live under /usr/share/textile-defects/assets/
 To package, use standard Debian tools like dpkg-deb or cpack.
 
-# Dependencies
+### Dependencies
 
 OpenCV 4.x
 GTK 3
 C++17 or later
 
-# Author
+### Author
 
 Aashutosh Singh Baghel
 aashubaghel08@gmail.com
